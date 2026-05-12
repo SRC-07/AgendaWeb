@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Agenda IA</title>
+    <title>Mi Agenda</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -12,7 +12,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
     <div class="container">
         <a class="navbar-brand fw-bold" href="{{ route('tareas.index') }}">
-            <i class="fas fa-book-open me-2"></i>Mi Agenda IA
+            <i class="fas fa-book-open me-2"></i>Mi Agenda
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
@@ -181,54 +181,60 @@
     document.getElementById('chat-bubble').onclick = toggleChat;
 
     async function sendMessage() {
-    const input = document.getElementById('user-input');
-    const messagesContainer = document.getElementById('chat-messages');
-    const texto = input.value.trim();
+        const input = document.getElementById('user-input');
+        const messagesContainer = document.getElementById('chat-messages');
+        const texto = input.value.trim();
 
-    if (texto === "") return;
+        if (texto === "") return;
 
-    messagesContainer.innerHTML += `<div style="background: #0d6efd; color: white; padding: 10px; border-radius: 10px; align-self: flex-end; max-width: 80%; font-size: 14px;">${texto}</div>`;
-    input.value = "";
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-    try {
-        const response = await fetch("{{ route('chat.ask') }}", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ pregunta: texto })
-        });
-
-        const data = await response.json();
-
-        messagesContainer.innerHTML += `<div style="background: #e9ecef; padding: 10px; border-radius: 10px; align-self: flex-start; max-width: 80%; font-size: 14px;">${data.respuesta}</div>`;
-        
-        if (data.nueva_tarea) {
-            const tableBody = document.querySelector('table tbody');
-            const colorPrioridad = data.nueva_tarea.prioridad === 'alta' ? 'danger' : (data.nueva_tarea.prioridad === 'media' ? 'primary' : 'info');
-            
-            const nuevaFila = `
-                <tr>
-                    <td class="ps-4 fw-bold text-dark">${data.nueva_tarea.titulo}</td>
-                    <td><span class="badge rounded-pill bg-secondary">Pendiente</span></td>
-                    <td><span class="badge bg-${colorPrioridad}">${data.nueva_tarea.prioridad.charAt(0).toUpperCase() + data.nueva_tarea.prioridad.slice(1)}</span></td>
-                    <td class="text-muted">${data.nueva_tarea.fecha}</td>
-                    <td class="text-center pe-4">
-                        <div class="d-flex justify-content-center gap-2">
-                            <a href="${data.nueva_tarea.url_edit}" class="btn btn-sm btn-outline-primary border-0 shadow-sm"><i class="fas fa-edit"></i></a>
-                            <small class="text-muted">Recarga para borrar</small>
-                        </div>
-                    </td>
-                </tr>`;
-            
-            tableBody.insertAdjacentHTML('afterbegin', nuevaFila);
-        }
-
+        messagesContainer.innerHTML += `<div style="background: #0d6efd; color: white; padding: 10px; border-radius: 10px; align-self: flex-end; max-width: 80%; font-size: 14px;">${texto}</div>`;
+        input.value = "";
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    } catch (error) {
-        messagesContainer.innerHTML += `<div style="background: #f8d7da; color: #842029; padding: 10px; border-radius: 10px; align-self: flex-start; font-size: 12px;">Error al conectar con la IA local.</div>`;
+        try {
+            const response = await fetch("{{ route('chat.ask') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ pregunta: texto })
+            });
+
+            const data = await response.json();
+
+            messagesContainer.innerHTML += `<div style="background: #e9ecef; padding: 10px; border-radius: 10px; align-self: flex-start; max-width: 80%; font-size: 14px;">${data.respuesta}</div>`;
+            
+            if (data.accion_realizada === 'crear' && data.nueva_tarea) {
+                const tableBody = document.querySelector('table tbody');
+                const colorPrioridad = data.nueva_tarea.prioridad === 'alta' ? 'danger' : (data.nueva_tarea.prioridad === 'media' ? 'primary' : 'info');
+                
+                const nuevaFila = `
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">${data.nueva_tarea.titulo}</td>
+                        <td><span class="badge rounded-pill bg-secondary">Pendiente</span></td>
+                        <td><span class="badge bg-${colorPrioridad}">${data.nueva_tarea.prioridad.charAt(0).toUpperCase() + data.nueva_tarea.prioridad.slice(1)}</span></td>
+                        <td class="text-muted">${data.nueva_tarea.fecha}</td>
+                        <td class="text-center pe-4">
+                            <a href="${data.nueva_tarea.url_edit}" class="btn btn-sm btn-outline-primary border-0 shadow-sm"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>`;
+                
+                if (tableBody) {
+                    tableBody.insertAdjacentHTML('afterbegin', nuevaFila);
+                }
+            } else if (data.accion_realizada === 'recargar') {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        } catch (error) {
+            messagesContainer.innerHTML += `<div style="background: #f8d7da; color: #842029; padding: 10px; border-radius: 10px; align-self: flex-start; font-size: 12px;">Error al conectar con la IA local.</div>`;
+        }
     }
-}
 
     document.getElementById('user-input').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') sendMessage();
