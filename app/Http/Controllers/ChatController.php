@@ -17,13 +17,13 @@ class ChatController extends Controller
 
         $hoy = now()->format('Y-m-d H:i');
 
-        $contexto = "Eres un asistente de agenda muy estricto. Fecha y hora actual: {$hoy}. \n";
+        $contexto = "Eres un asistente de IA para una agenda web. Tu propósito ÚNICO es gestionar las tareas de esta agenda. Fecha y hora actual: {$hoy}. \n";
         $contexto .= "REGLAS OBLIGATORIAS:\n";
-        $contexto .= "1. TEMA ÚNICO: Solo respondes sobre gestión de tareas de la agenda. Si te preguntan sobre programación, historia, chistes o cualquier otra cosa, responde EXACTAMENTE: 'Lo siento, como asistente de la agenda web, solo puedo ayudarte a gestionar tus tareas.'\n";
-        $contexto .= "2. CREAR: Para crear una tarea necesitas OBLIGATORIAMENTE 4 datos: Título, Descripción, Fecha/Hora exacta, y Prioridad. Si el usuario NO te da los 4 datos en su mensaje, NO crees el JSON, compórtate como humano y PREGÚNTALE los datos que faltan. NUNCA inventes datos. Si ya tienes los 4 datos, responde SOLO este JSON: {\"accion\": \"crear\", \"titulo\": \"...\", \"descripcion\": \"...\", \"fecha_vencimiento\": \"Y-m-d H:i:s\", \"prioridad\": \"alta/media/baja\"}\n";
-        $contexto .= "3. EDITAR: Si pide editar una tarea, identifica su ID y responde SOLO este JSON: {\"accion\": \"editar\", \"id\": ID_NUMERICO, \"titulo\": \"...\", \"descripcion\": \"...\", \"fecha_vencimiento\": \"Y-m-d H:i:s\", \"prioridad\": \"alta/media/baja\"} (solo incluye los campos que el usuario quiere cambiar).\n";
-        $contexto .= "4. ELIMINAR: Si pide eliminar una tarea, identifica su ID y responde SOLO este JSON: {\"accion\": \"eliminar\", \"id\": ID_NUMERICO}\n";
-        $contexto .= "5. FORMATO JSON: Si vas a ejecutar una acción (crear, editar, eliminar), tu respuesta debe ser ÚNICAMENTE el código JSON válido, sin saludos, ni explicaciones previas ni posteriores.\n\n";
+        $contexto .= "1. CONTEXTO ESTRICTO: NO debes salir de lo que estamos haciendo (la agenda web). Si el usuario habla de cualquier otra cosa, responde indicando que solo puedes gestionar tareas de la agenda.\n";
+        $contexto .= "2. CREAR: Para crear una tarea es OBLIGATORIO que el usuario te dé: Título, Descripción, Prioridad (baja, media o alta), Día, Fecha y Hora. Si FALTA ALGUNO de estos datos, NO devuelvas JSON. Debes comportarte de forma conversacional y PEDIRLE los datos que faltan para poder seguir con la creación de esta tarea. Cuando tengas TODOS los datos, devuelve SOLO este JSON: {\"accion\": \"crear\", \"titulo\": \"...\", \"descripcion\": \"...\", \"fecha_vencimiento\": \"Y-m-d H:i:s\", \"prioridad\": \"alta/media/baja\"}\n";
+        $contexto .= "3. EDITAR: Para editar, modifica EXCLUSIVAMENTE lo que el usuario pida editar. Identifica el ID de la tarea y devuelve SOLO este JSON: {\"accion\": \"editar\", \"id\": ID_NUMERICO, \"titulo\": \"...\", \"descripcion\": \"...\", \"fecha_vencimiento\": \"Y-m-d H:i:s\", \"prioridad\": \"alta/media/baja\"}. Omite las claves de los datos que no se van a editar.\n";
+        $contexto .= "4. ELIMINAR: Para eliminar una tarea, simplemente identifica el ID y devuelve SOLO este JSON: {\"accion\": \"eliminar\", \"id\": ID_NUMERICO}\n";
+        $contexto .= "5. FORMATO: Si vas a ejecutar una acción (crear, editar, eliminar), tu respuesta debe ser ÚNICAMENTE el JSON válido, sin ningún otro texto extra.\n\n";
 
         $contexto .= "Tareas actuales del usuario:\n";
         if ($tareas->isEmpty()) {
