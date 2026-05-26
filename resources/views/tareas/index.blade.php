@@ -173,6 +173,8 @@
 </div>
 
 <script>
+    let chatHistory = [];
+
     function toggleChat() {
         const windowChat = document.getElementById('chat-window');
         windowChat.style.display = (windowChat.style.display === 'none' || windowChat.style.display === '') ? 'flex' : 'none';
@@ -198,12 +200,23 @@
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ pregunta: texto })
+                body: JSON.stringify({ pregunta: texto, historial: chatHistory })
             });
 
             const data = await response.json();
 
             messagesContainer.innerHTML += `<div style="background: #e9ecef; padding: 10px; border-radius: 10px; align-self: flex-start; max-width: 80%; font-size: 14px;">${data.respuesta}</div>`;
+            
+            if (data.accion_realizada) {
+                chatHistory = [];
+            } else {
+                chatHistory.push({ rol: 'user', mensaje: texto });
+                chatHistory.push({ rol: 'model', mensaje: data.respuesta });
+                if (chatHistory.length > 10) {
+                    chatHistory.shift();
+                    chatHistory.shift();
+                }
+            }
             
             if (data.accion_realizada === 'crear' && data.nueva_tarea) {
                 const tableBody = document.querySelector('table tbody');
